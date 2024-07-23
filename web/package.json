@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
-    "serverless-finch": "^2.6.0"
+    "serverless-finch": "^4.0"
   },
   "repository": {
     "type": "git",

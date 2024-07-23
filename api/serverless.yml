@@ -196,8 +196,8 @@ functions:
           private: true
           caching:
             enabled: true
-            cacheKeyParameters:
-              - name: request.path.key
+            # cacheKeyParameters:
+            #   - name: request.path.key
 
 resources:
   Outputs:
