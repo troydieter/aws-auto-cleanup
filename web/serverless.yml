@@ -8,7 +8,7 @@ custom:
     distributionFolder: ./src
     sse: AES256
   domain: cleanup.troydieter.com
-  certArn: ""
+  certArn: "redacted"
 
 
 provider:
@@ -46,7 +46,8 @@ resources:
         PolicyDocument:
           Statement:
             - Effect: Allow
-              Principal: "*"
+              Principal:
+                AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OriginAccessIdentity}
               Action: "s3:GetObject"
               Resource: !Sub "${WebBucket.Arn}/*"
 

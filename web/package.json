@@ -3,9 +3,6 @@
   "description": "Auto Cleanup Web",
   "version": "2.4.0",
   "private": true,
-  "dependencies": {
-    "serverless-cloudfront-invalidate": "^1.12.2"
-  },
   "devDependencies": {
     "serverless-finch": "^4.0"
   },
