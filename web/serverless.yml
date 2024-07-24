@@ -50,29 +50,52 @@ resources:
               Action: "s3:GetObject"
               Resource: !Sub "${WebBucket.Arn}/*"
 
-    addSecurityHeadersFunction:
+    # addSecurityHeadersFunction:
+    #   Type: AWS::CloudFront::Function
+    #   Properties:
+    #     Name: add-security-headers
+    #     AutoPublish: true
+    #     FunctionConfig:
+    #       Comment: Adds security headers to the response
+    #       Runtime: cloudfront-js-1.0
+    #     FunctionCode: |
+    #       function handler(event) {
+    #           var response = event.response;
+    #           var headers = response.headers;
+
+    #           // Set HTTP security headers
+    #           // Since JavaScript doesn't allow for hyphens in variable names, we use the dict["key"] notation
+    #           headers['strict-transport-security'] = { value: 'max-age=63072000; includeSubdomains; preload'};
+    #           headers['x-content-type-options'] = { value: 'nosniff'};
+    #           headers['x-frame-options'] = {value: 'DENY'};
+    #           headers['x-xss-protection'] = {value: '1; mode=block'};
+
+    #           // Return the response to viewers
+    #           return response;
+    #       }
+
+    corsPolicy:
       Type: AWS::CloudFront::Function
       Properties:
-        Name: add-security-headers
+        Name: add-CORS-policy
         AutoPublish: true
         FunctionConfig:
-          Comment: Adds security headers to the response
-          Runtime: cloudfront-js-1.0
+          Comment: Adds CORS policy to the response
+          Runtime: cloudfront-js-2.0
         FunctionCode: |
-          function handler(event) {
-              var response = event.response;
-              var headers = response.headers;
+            async function handler(event)  {
+                const request = event.request;
+                const response  = event.response;
+            
+                // If Access-Control-Allow-Origin CORS header is missing, add it.
+                // Since JavaScript doesn't allow for hyphens in variable names, we use the dict["key"] notation.
+                if (!response.headers['access-control-allow-origin'] && request.headers['origin']) {
+                    response.headers['access-control-allow-origin'] = {value: request.headers['origin'].value};
+                    console.log("Access-Control-Allow-Origin was missing, adding it now.");
+                }
 
-              // Set HTTP security headers
-              // Since JavaScript doesn't allow for hyphens in variable names, we use the dict["key"] notation
-              headers['strict-transport-security'] = { value: 'max-age=63072000; includeSubdomains; preload'};
-              headers['x-content-type-options'] = { value: 'nosniff'};
-              headers['x-frame-options'] = {value: 'DENY'};
-              headers['x-xss-protection'] = {value: '1; mode=block'};
-
-              // Return the response to viewers
-              return response;
-          }
+                return response;
+            }
 
     CloudFrontDistribution:
       Type: AWS::CloudFront::Distribution
@@ -96,9 +119,7 @@ resources:
               Cookies:
                 Forward: none
             ViewerProtocolPolicy: redirect-to-https
-            FunctionAssociations:
-              - EventType: viewer-response
-                FunctionARN: !GetAtt addSecurityHeadersFunction.FunctionMetadata.FunctionARN
+
           DefaultRootObject: index.html
           Aliases:
             - ${self:custom.domain}
