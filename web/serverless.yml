@@ -25,7 +25,6 @@ resources:
   Resources:
     WebBucket:
       Type: AWS::S3::Bucket
-      DeletionPolicy: Retain
       Properties:
         BucketName: ${self:service}-${self:provider.stage}-site-${cf:auto-cleanup-api-${self:provider.stage}.AccountID}
         BucketEncryption:
@@ -99,7 +98,7 @@ resources:
             ViewerProtocolPolicy: redirect-to-https
             FunctionAssociations:
               - EventType: viewer-response
-                FunctionArn: !GetAtt addSecurityHeadersFunction.FunctionMetadata.FunctionARN
+                FunctionARN: !GetAtt addSecurityHeadersFunction.FunctionMetadata.FunctionARN
           DefaultRootObject: index.html
           Aliases:
             - ${self:custom.domain}
