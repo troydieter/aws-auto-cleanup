@@ -32,9 +32,12 @@ resources:
           ServerSideEncryptionConfiguration:
             - ServerSideEncryptionByDefault:
                 SSEAlgorithm: AES256
-        WebsiteConfiguration:
-          IndexDocument: index.html
-          ErrorDocument: error.html
+
+    OriginAccessIdentity:
+      Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+      Properties:
+        CloudFrontOriginAccessIdentityConfig:
+          Comment: "OAI for auto-cleanup-web"
 
     WebBucketPolicy:
       Type: AWS::S3::BucketPolicy
@@ -57,7 +60,7 @@ resources:
             - DomainName: !GetAtt WebBucket.DomainName
               Id: WebBucketOrigin
               S3OriginConfig:
-                OriginAccessIdentity: ""
+                OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OriginAccessIdentity}
           DefaultCacheBehavior:
             AllowedMethods:
               - GET
