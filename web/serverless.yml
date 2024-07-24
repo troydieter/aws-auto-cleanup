@@ -8,7 +8,7 @@ custom:
     distributionFolder: ./src
     sse: AES256
   domain: cleanup.troydieter.com
-  certArn: "redacted"
+  certArn: ""
 
 
 provider:
@@ -81,4 +81,3 @@ resources:
 
 plugins:
   - serverless-finch
-  - serverless-cf-invalidate-proxy
