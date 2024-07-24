@@ -17,5 +17,8 @@
     "remove": "serverless remove",
     "deploy:client": "serverless client deploy --no-policy-change",
     "remove:client": "serverless client remove"
+  },
+  "dependencies": {
+    "serverless-manifest-plugin": "^1.0.9"
   }
 }
