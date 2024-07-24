@@ -29,13 +29,13 @@ The AWS Auto Cleanup Website is a static Vue.js website hosted within Amazon S3.
 4. Deploy infrastructure
 
    ```bash
-   npm run deploy -- [--region] [--aws-profile]
+   serverless deploy [--region] [--aws-profile]
    ```
 
 5. Deploy website
 
    ```bash
-   npm run deploy:client -- [--region] [--aws-profile]
+   serverless client deploy --no-policy-change [--region] [--aws-profile]
    ```
 
 ## Removal
