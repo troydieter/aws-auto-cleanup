@@ -15,7 +15,7 @@
   "scripts": {
     "deploy": "serverless deploy",
     "remove": "serverless remove",
-    "deploy:client": "serverless client deploy",
+    "deploy:client": "serverless client deploy --no-policy-change",
     "remove:client": "serverless client remove"
   }
 }
