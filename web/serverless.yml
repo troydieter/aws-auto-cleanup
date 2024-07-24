@@ -7,6 +7,9 @@ custom:
     bucketName: ${self:service}-${self:provider.stage}-site-${cf:auto-cleanup-api-${self:provider.stage}.AccountID}
     distributionFolder: ./src
     sse: AES256
+  domain: cleanup.troydieter.com
+  certArn: "redacted"
+
 
 provider:
   name: aws
@@ -49,6 +52,7 @@ resources:
       Properties:
         DistributionConfig:
           Enabled: true
+          Comment: "auto-cleanup-web"
           Origins:
             - DomainName: !GetAtt WebBucket.DomainName
               Id: WebBucketOrigin
@@ -65,9 +69,13 @@ resources:
                 Forward: none
             ViewerProtocolPolicy: redirect-to-https
           DefaultRootObject: index.html
+          Aliases:
+            - ${self:custom.domain}
           ViewerCertificate:
-            CloudFrontDefaultCertificate: true
+            AcmCertificateArn: ${self:custom.certArn}
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1.2_2021
 
 plugins:
   - serverless-finch
-  - serverless-cloudfront-invalidate
+  - serverless-cf-invalidate-proxy
