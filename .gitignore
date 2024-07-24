@@ -327,3 +327,4 @@ npm-debug.log
 yarn-error.log
 
 # End of https://www.toptal.com/developers/gitignore/api/git,node,macos,python,vscode,serverless,vuejs,vue
+web/package-lock.json
