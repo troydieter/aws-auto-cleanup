@@ -61,14 +61,14 @@ class AwsAutoCleanupStack(Stack):
             self, "ExecutionLogBucket",
             bucket_name=f"auto-cleanup-app-{stage}-execution-log-{self.account}",
             encryption=BucketEncryption.S3_MANAGED,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         athena_results_bucket = Bucket(
             self, "AthenaResultsBucket",
             bucket_name=f"auto-cleanup-app-{stage}-athena-results-{self.account}",
             encryption=BucketEncryption.S3_MANAGED,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.DESTROY,
             lifecycle_rules=[
                 LifecycleRule(expiration=Duration.days(7))
             ],
