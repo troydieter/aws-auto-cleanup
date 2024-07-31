@@ -13,7 +13,7 @@ from aws_cdk.aws_s3 import (
     Bucket, BucketEncryption, LifecycleRule
 )
 from aws_cdk.aws_lambda import (
-    Function, Runtime, Code
+    Function, Runtime, Code, LayerVersion
 )
 from aws_cdk.aws_iam import (
     Role, ServicePrincipal, PolicyDocument, PolicyStatement, Effect
@@ -26,6 +26,9 @@ from aws_cdk.aws_s3 import (
 from aws_cdk.aws_glue import (
     CfnDatabase, CfnTable
 )
+from aws_cdk.aws_apigateway import (
+    MethodLoggingLevel
+)
 
 DIRNAME = os.path.dirname(__file__)
 
@@ -37,6 +40,7 @@ class AwsAutoCleanupStack(Stack):
 
         project = context["project"]
         Tags.of(self).add("project", project)
+        log_level = "INFO"
 
         # Define DynamoDB tables
         settings_table = Table(
@@ -218,6 +222,144 @@ class AwsAutoCleanupStack(Stack):
                 }
             }
         )
+
+        # IAM Role for Lambda
+        lambda_role = Role(self, "LambdaRole",
+                           assumed_by=ServicePrincipal("lambda.amazonaws.com"),
+                           inline_policies={
+                               "AllowDynamoDB": PolicyDocument(statements=[
+                                   PolicyStatement(
+                                       effect=Effect.ALLOW,
+                                       actions=[
+                                           "dynamodb:DeleteItem",
+                                           "dynamodb:GetItem",
+                                           "dynamodb:PutItem",
+                                           "dynamodb:Scan"
+                                       ],
+                                       resources=["*"]
+                                   )
+                               ]),
+                               "AllowS3": PolicyDocument(statements=[
+                                   PolicyStatement(
+                                       effect=Effect.ALLOW,
+                                       actions=[
+                                           "s3:Get*",
+                                           "s3:List*"
+                                       ],
+                                       resources=["*"]
+                                   )
+                               ])
+                           }
+                           )
+
+        # Lambda Layers
+        python_requirements_layer = LayerVersion(self, "PythonRequirementsLayer",
+                                                 code=Code.from_asset("path/to/layer.zip"),
+                                                 compatible_runtimes=[Runtime.PYTHON_3_9]
+                                                 )
+
+        # API Gateway
+        api = RestApi(self, "AutoCleanupApi",
+                      rest_api_name="Auto Cleanup API",
+                      description="API for auto-cleanup service",
+                      deploy_options={
+                          "tracing_enabled": True,
+                          "data_trace_enabled": True,
+                          "metrics_enabled": True,
+                          "logging_level": MethodLoggingLevel.INFO,
+                          "cache_cluster_enabled": True,
+                          "cache_cluster_size": "0.5"
+                      }
+                      )
+
+        # Define the Lambdas and API Gateway Endpoints
+        functions = [
+            {
+                "name": "AllowlistCreate",
+                "handler": "src/allowlist/create.lambda_handler",
+                "memory_size": 128,
+                "timeout": 30,
+                "description": "Create allowlist entry",
+                "path": "/allowlist/entry",
+                "method": "POST"
+            },
+            {
+                "name": "AllowlistRead",
+                "handler": "src/allowlist/read.lambda_handler",
+                "memory_size": 512,
+                "timeout": 30,
+                "description": "Read allowlist",
+                "path": "/allowlist",
+                "method": "GET"
+            },
+            {
+                "name": "AllowlistUpdate",
+                "handler": "src/allowlist/update.lambda_handler",
+                "memory_size": 128,
+                "timeout": 30,
+                "description": "Update allowlist entry",
+                "path": "/allowlist/entry",
+                "method": "PUT"
+            },
+            {
+                "name": "AllowlistDelete",
+                "handler": "src/allowlist/delete.lambda_handler",
+                "memory_size": 128,
+                "timeout": 30,
+                "description": "Delete allowlist entry",
+                "path": "/allowlist/entry",
+                "method": "DELETE"
+            },
+            {
+                "name": "ServiceRead",
+                "handler": "src/service/read.lambda_handler",
+                "memory_size": 512,
+                "timeout": 30,
+                "description": "Returns AWS services supported by Auto Cleanup",
+                "path": "/settings/service",
+                "method": "GET"
+            },
+            {
+                "name": "ExecutionLogList",
+                "handler": "src/execution_log/list.lambda_handler",
+                "memory_size": 512,
+                "timeout": 30,
+                "description": "Returns execution logs",
+                "path": "/execution",
+                "method": "GET"
+            },
+            {
+                "name": "ExecutionLogRead",
+                "handler": "src/execution_log/read.lambda_handler",
+                "memory_size": 2048,
+                "timeout": 30,
+                "description": "Returns execution logs",
+                "path": "/execution/{key}",
+                "method": "GET"
+            }
+        ]
+
+        for function in functions:
+            lambda_function = _lambda.Function(self, function["name"],
+                                               runtime=_lambda.Runtime.PYTHON_3_9,
+                                               code=_lambda.Code.from_asset(os.path.join(DIRNAME, "src"),
+                                                                            handler=function["handler"],
+                                                                            memory_size=function["memory_size"],
+                                                                            timeout=core.Duration.seconds(
+                                                                                function["timeout"]),
+                                                                            description=function["description"],
+                                                                            environment={
+                                                                                "LOG_LEVEL": log_level,
+                                                                                # Add other environment variables here as needed
+                                                                            },
+                                                                            role=lambda_role,
+                                                                            layers=[python_requirements_layer]
+                                                                            ))
+
+            # API Gateway integration
+            lambda_integration = LambdaIntegration(lambda_function)
+            resource = api.root.resource_for_path(function["path"])
+            resource.add_method(function["method"], lambda_integration, api_key_required=True)
 
         # Outputs
         CfnOutput(self, "SettingsTableName", value=settings_table.table_name)
