@@ -1,0 +1,930 @@
+[
+  {
+    "key": {
+      "S": "version"
+    },
+    "value": {
+      "N": "11"
+    }
+  },
+  {
+    "key": {
+      "S": "general"
+    },
+    "value": {
+      "M": {
+        "dry_run": {
+          "BOOL": true
+        }
+      }
+    }
+  },
+  {
+    "key": {
+      "S": "services"
+    },
+    "value": {
+      "M": {
+        "airflow": {
+          "M": {
+            "environment": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Environment Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "amplify": {
+          "M": {
+            "app": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "App Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "cloudformation": {
+          "M": {
+            "stack": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Stack Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "cloudwatch": {
+          "M": {
+            "log_group": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Log Group Name (e.g., /aws/lambda/auto-cleanup-app-prod)"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            }
+          }
+        },
+        "dynamodb": {
+          "M": {
+            "table": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Table Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "ec2": {
+          "M": {
+            "address": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Allocation ID (e.g., eipalloc-048e1ccf5ae5d63fb)"
+                }
+              }
+            },
+            "image": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Image ID (e.g., ami-0cff7528ff583bf9a)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "instance": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Instance ID (e.g., i-0d97729996c07c6dd)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "nat_gateway": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "NAT Gateway ID (e.g., nat-0d97729996c07c6dd)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "security_group": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Group ID (e.g., sg-0b3bbfe81679125ff)"
+                }
+              }
+            },
+            "snapshot": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Snapshot ID (e.g., snap-0a3dda5966b9b089)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "volume": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Volume ID (e.g., vol-0462d1b55dd229191)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "ecr": {
+          "M": {
+            "image": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Imagine Digest (e.g., sha256:f1d4ae3f7261a72e98c6ebefe)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "repository": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Repository Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "ecs": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Cluster Name"
+                }
+              }
+            },
+            "service": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Service Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "efs": {
+          "M": {
+            "file_system": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "File System ID (e.g., fs-0edccd369d527c526)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "eks": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Cluster Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "fargate_profile": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Fargate Profile Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "node_group": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Node Group Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "elastic_beanstalk": {
+          "M": {
+            "application": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Application Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "elasticache": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Cache Cluster Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "replication_group": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Replication Group ID"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "elasticsearch_service": {
+          "M": {
+            "domain": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Domain Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "elb": {
+          "M": {
+            "load_balancer": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Load Balancer Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "emr": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Job Flow ID"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "glue": {
+          "M": {
+            "crawler": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Crawler Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "database": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Database Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            },
+            "dev_endpoint": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Endpoint Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "iam": {
+          "M": {
+            "access_key": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Access Key ID (e.g., AKIA5J4X5W3JGW1JIA4Y)"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            },
+            "policy": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Policy Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            },
+            "role": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Role Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            },
+            "user": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "User Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            },
+            "user_policy": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "User Policy Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            }
+          }
+        },
+        "kafka": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Cluster Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "kinesis": {
+          "M": {
+            "stream": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Stream Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "kms": {
+          "M": {
+            "key": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Key ID (e.g., 1234abcd-12ab-34cd-56ef-1234567890ab)"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "lambda": {
+          "M": {
+            "function": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Function Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            }
+          }
+        },
+        "rds": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "DB Cluster Identifier"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "cluster_snapshot": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "DB Cluster Snapshot Identifier"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "instance": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "DB Instance Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "snapshot": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "DB Snapshot Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "redshift": {
+          "M": {
+            "cluster": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Cluster Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "snapshot": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Snapshot Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "s3": {
+          "M": {
+            "bucket": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Bucket Name"
+                },
+                "ttl": {
+                  "N": "30"
+                }
+              }
+            }
+          }
+        },
+        "sagemaker": {
+          "M": {
+            "app": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "App Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "endpoint": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Endpoint Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            },
+            "notebook_instance": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Notebook Instance Name"
+                },
+                "ttl": {
+                  "N": "7"
+                }
+              }
+            }
+          }
+        },
+        "transfer": {
+          "M": {
+            "server": {
+              "M": {
+                "clean": {
+                  "BOOL": true
+                },
+                "id": {
+                  "S": "Server ID (e.g., s-eafc3fa17242456e9)"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "key": {
+      "S": "regions"
+    },
+    "value": {
+      "M": {
+        "af-south-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-east-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-northeast-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-northeast-2": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-northeast-3": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-south-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-southeast-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ap-southeast-2": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "ca-central-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "cn-north-1": {
+          "M": {
+            "clean": {
+              "BOOL": false
+            }
+          }
+        },
+        "cn-northwest-1": {
+          "M": {
+            "clean": {
+              "BOOL": false
+            }
+          }
+        },
+        "eu-central-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "eu-north-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "eu-south-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "eu-west-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "eu-west-2": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "eu-west-3": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "me-south-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "sa-east-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "us-east-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "us-east-2": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "us-west-1": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        },
+        "us-west-2": {
+          "M": {
+            "clean": {
+              "BOOL": true
+            }
+          }
+        }
+      }
+    }
+  }
+]
