@@ -35,6 +35,9 @@ class AwsAutoCleanupStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, stage, context, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        project = context["project"]
+        Tags.of(self).add("project", project)
+
         # Define DynamoDB tables
         settings_table = Table(
             self, "SettingsTable",
