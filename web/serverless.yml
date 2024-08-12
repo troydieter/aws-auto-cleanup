@@ -9,7 +9,7 @@ custom:
     sse: AES256
     corsFile: cors_configuration.json # Modify the CORS file to match your subdomain below. You can use a wildcard as well.. i.e. *.troydieter.com
   domain: cleanup.troydieter.com
-  certArn: ""
+  certArn: "" # Replace with an ACM certificate to cover the above domain value
 
 
 provider:
