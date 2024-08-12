@@ -7,6 +7,7 @@ custom:
     bucketName: ${self:service}-${self:provider.stage}-site-${cf:auto-cleanup-api-${self:provider.stage}.AccountID}
     distributionFolder: ./src
     sse: AES256
+    corsFile: cors_configuration.json # Modify the CORS file to match your subdomain below. You can use a wildcard as well.. i.e. *.troydieter.com
   domain: cleanup.troydieter.com
   certArn: ""
 
