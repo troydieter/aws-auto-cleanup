@@ -195,7 +195,7 @@ functions:
           cors: true
           private: true
           caching:
-            enabled: true
+            enabled: false
             # cacheKeyParameters:
             #   - name: request.path.key
 
