@@ -13,7 +13,7 @@ botocore==1.24.25
     #   -r requirements.in
     #   boto3
     #   s3transfer
-dynamodb-json==1.3
+dynamodb-json==1.4.2
     # via -r requirements.in
 func-timeout==4.3.5
     # via -r requirements.in
