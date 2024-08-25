@@ -461,7 +461,8 @@ class AwsAutoCleanupAppStack(Stack):
                 type=AttributeType.STRING
             ),
             billing_mode=BillingMode.PAY_PER_REQUEST,
-            point_in_time_recovery=True
+            point_in_time_recovery=True,
+            removal_policy=core.RemovalPolicy.DESTROY
         )
 
         # Glue Table for Execution Logs
