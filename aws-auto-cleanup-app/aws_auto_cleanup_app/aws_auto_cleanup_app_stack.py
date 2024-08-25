@@ -36,12 +36,14 @@ class AwsAutoCleanupAppStack(Stack):
                         "logs:CreateLogGroup",
                         "logs:TagResource",
                     ],
-                    resources=[f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*"]
+                    resources=[
+                        f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*"]
                 ),
                 PolicyStatement(
                     effect=Effect.ALLOW,
                     actions=["logs:PutLogEvents"],
-                    resources=[f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*:*"]
+                    resources=[
+                        f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*:*"]
                 ),
                 PolicyStatement(
                     effect=Effect.ALLOW,
@@ -386,18 +388,6 @@ class AwsAutoCleanupAppStack(Stack):
             )
         )
 
-        ac_function = _lambda.Function(self, "ac_function",
-                                       runtime=_lambda.Runtime.PYTHON_3_9,
-                                       handler="./aws_auto_cleanup_app/src/main.lambda_handler",
-                                       code=_lambda.Code.from_asset("./aws_auto_cleanup_app/src/"),
-                                       memory_size=512,
-                                       timeout=Duration.seconds(900),
-                                       retry_attempts=0,
-                                       description="Removes unused AWS resources based on time of creation",
-                                       layers=[self.create_dependencies_layer(self.stack_name, "ac_cleanup")],
-                                       role=ac_lambda_role
-                                       )
-
         # DynamoDB Allowlist Table
         allowlist_table = Table(
             self, 'AllowlistTable',
@@ -506,6 +496,24 @@ class AwsAutoCleanupAppStack(Stack):
             schedule=Schedule.rate(core.Duration.days(3)),
             targets=[]
         )
+
+        ac_function = _lambda.Function(self, "ac_function",
+                                       runtime=_lambda.Runtime.PYTHON_3_9,
+                                       handler="./aws_auto_cleanup_app/src/main.lambda_handler",
+                                       code=_lambda.Code.from_asset("./aws_auto_cleanup_app/src/"),
+                                       memory_size=512,
+                                       timeout=Duration.seconds(900),
+                                       retry_attempts=0,
+                                       description="Removes unused AWS resources based on time of creation",
+                                       layers=[self.create_dependencies_layer(self.stack_name, "ac_cleanup")],
+                                       role=ac_lambda_role,
+                                       environment={
+                                           "LOG_LEVEL": "INFO",
+                                           "EXECUTION_LOG_BUCKET": execution_log_bucket.bucket_name,
+                                           "SETTINGS_TABLE": settings_table.table_name,
+                                           "ALLOWLIST_TABLE": allowlist_table.table_name
+                                       }
+                                       )
 
     def create_dependencies_layer(self, project_name, function_name: str) -> _lambda.LayerVersion:
         requirements_file = "./aws_auto_cleanup_app/src/requirements.txt"
