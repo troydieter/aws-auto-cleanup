@@ -13,6 +13,7 @@ from aws_cdk.aws_glue import CfnTable, CfnDatabase
 from aws_cdk.aws_iam import Role, ServicePrincipal, Policy, PolicyStatement, Effect, PolicyDocument
 from aws_cdk.aws_logs import LogGroup
 from aws_cdk.aws_s3 import Bucket, BucketEncryption, LifecycleRule
+from aws_cdk.aws_events_targets import LambdaFunction
 from constructs import Construct
 
 
@@ -494,7 +495,6 @@ class AwsAutoCleanupAppStack(Stack):
         auto_cleanup_events_rule_schedule1 = Rule(
             self, 'AutoCleanupEventsRuleSchedule1',
             schedule=Schedule.rate(core.Duration.days(3)),
-            targets=[]
         )
 
         ac_function = _lambda.Function(self, "ac_function",
@@ -514,6 +514,9 @@ class AwsAutoCleanupAppStack(Stack):
                                            "ALLOWLIST_TABLE": allowlist_table.table_name
                                        }
                                        )
+
+        # Target the function
+        auto_cleanup_events_rule_schedule1.add_target(LambdaFunction(ac_function))
 
     def create_dependencies_layer(self, project_name, function_name: str) -> _lambda.LayerVersion:
         requirements_file = "./aws_auto_cleanup_app/src/requirements.txt"
