@@ -4,15 +4,15 @@ import subprocess
 from aws_cdk import (
     aws_lambda as _lambda,
     Stack,
-    Duration,
-    core
+    Duration
 )
+import aws_cdk as core
 from aws_cdk.aws_dynamodb import Table, Attribute, AttributeType, BillingMode
 from aws_cdk.aws_events import Rule, Schedule
-from aws_cdk.aws_glue import CfnDatabase, CfnTable
-from aws_cdk.aws_iam import Role, ServicePrincipal, ManagedPolicy, PolicyDocument, PolicyStatement
-from aws_cdk.aws_s3 import Bucket, BucketEncryption, LifecycleRule
+from aws_cdk.aws_glue import CfnTable, CfnDatabase
+from aws_cdk.aws_iam import Role, ServicePrincipal, Policy, PolicyStatement, Effect, PolicyDocument
 from aws_cdk.aws_logs import LogGroup
+from aws_cdk.aws_s3 import Bucket, BucketEncryption, LifecycleRule
 from constructs import Construct
 
 
@@ -20,408 +20,371 @@ class AwsAutoCleanupAppStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        ac_lambda_role = Role(self, 'IamRoleLambdaExecution',
-                              assume_role_policy_document={
-                                  'Version': '2012-10-17',
-                                  'Statement': [
-                                      {
-                                          'Effect': 'Allow',
-                                          'Principal': {
-                                              'Service': [
-                                                  'lambda.amazonaws.com',
-                                              ],
-                                          },
-                                          'Action': [
-                                              'sts:AssumeRole',
-                                          ],
-                                      },
-                                  ],
-                              },
-                              policies=[
-                                  {
-                                      'policyName': '-'.join([
-                                          'auto-cleanup-app',
-                                          'prod',
-                                          'lambda',
-                                      ]),
-                                      'policyDocument': {
-                                          'Version': '2012-10-17',
-                                          'Statement': [
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'logs:CreateLogStream',
-                                                      'logs:CreateLogGroup',
-                                                      'logs:TagResource',
-                                                  ],
-                                                  'Resource': [
-                                                      f"""arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*""",
-                                                  ],
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'logs:PutLogEvents',
-                                                  ],
-                                                  'Resource': [
-                                                      f"""arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*:*""",
-                                                  ],
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      '*',
-                                                  ],
-                                                  'Resource': '*',
-                                                  'Condition': {
-                                                      'ForAnyValue:StringEquals': {
-                                                          'aws:CalledVia': [
-                                                              'cloudformation.amazonaws.com',
-                                                          ],
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'airflow:DeleteEnvironment',
-                                                      'airflow:GetEnvironment',
-                                                      'airflow:ListEnvironments',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'amplify:DeleteApp',
-                                                      'amplify:ListApps',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'cloudformation:DeleteStack',
-                                                      'cloudformation:DescribeStacks',
-                                                      'cloudformation:DescribeStackResources',
-                                                      'cloudformation:ListStackResources',
-                                                      'cloudformation:ListStacks',
-                                                      'cloudformation:UpdateTerminationProtection',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'codecommit:GetRepository',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'dynamodb:BatchWriteItem',
-                                                      'dynamodb:DeleteItem',
-                                                      'dynamodb:DeleteTable',
-                                                      'dynamodb:DescribeTable',
-                                                      'dynamodb:GetItem',
-                                                      'dynamodb:ListTables',
-                                                      'dynamodb:PutItem',
-                                                      'dynamodb:Scan',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'ec2:DeleteNatGateway',
-                                                      'ec2:DeleteSecurityGroup',
-                                                      'ec2:DeleteSnapshot',
-                                                      'ec2:DeleteVolume',
-                                                      'ec2:DeregisterImage',
-                                                      'ec2:DescribeAddresses',
-                                                      'ec2:DescribeImages',
-                                                      'ec2:DescribeInstanceAttribute',
-                                                      'ec2:DescribeInstances',
-                                                      'ec2:DescribeNatGateways',
-                                                      'ec2:DescribeSecurityGroups',
-                                                      'ec2:DescribeSnapshots',
-                                                      'ec2:DescribeVolumes',
-                                                      'ec2:ModifyInstanceAttribute',
-                                                      'ec2:ReleaseAddress',
-                                                      'ec2:StopInstances',
-                                                      'ec2:TerminateInstances',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'ecr:BatchDeleteImage',
-                                                      'ecr:DeleteRepository',
-                                                      'ecr:DescribeImages',
-                                                      'ecr:DescribeRepositories',
-                                                      'ecr:ListImages',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'ecs:DeleteCluster',
-                                                      'ecs:DeleteService',
-                                                      'ecs:DescribeClusters',
-                                                      'ecs:DescribeServices',
-                                                      'ecs:ListClusters',
-                                                      'ecs:ListServices',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'eks:DeleteCluster',
-                                                      'eks:DeleteFargateProfile',
-                                                      'eks:DeleteNodegroup',
-                                                      'eks:DescribeCluster',
-                                                      'eks:DescribeFargateProfile',
-                                                      'eks:DescribeNodegroup',
-                                                      'eks:ListClusters',
-                                                      'eks:ListFargateProfiles',
-                                                      'eks:ListNodegroups',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'elasticbeanstalk:DeleteApplication',
-                                                      'elasticbeanstalk:DescribeApplications',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'elasticache:DeleteCacheCluster',
-                                                      'elasticache:DeleteReplicationGroup',
-                                                      'elasticache:DescribeCacheClusters',
-                                                      'elasticache:DescribeReplicationGroups',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'elasticfilesystem:DeleteFileSystem',
-                                                      'elasticfilesystem:DeleteMountTarget',
-                                                      'elasticfilesystem:DescribeFileSystems',
-                                                      'elasticfilesystem:DescribeMountTargets',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'elasticloadbalancing:DeleteLoadBalancer',
-                                                      'elasticloadbalancing:DescribeLoadBalancers',
-                                                      'elasticloadbalancing:ModifyLoadBalancerAttributes',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'elasticmapreduce:ListClusters',
-                                                      'elasticmapreduce:TerminateJobFlows',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'es:DeleteElasticsearchDomain',
-                                                      'es:DescribeElasticsearchDomainConfig',
-                                                      'es:ListDomainNames',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'glue:DeleteCrawler',
-                                                      'glue:DeleteDatabase',
-                                                      'glue:DeleteDevEndPoint',
-                                                      'glue:GetCrawlers',
-                                                      'glue:GetDatabases',
-                                                      'glue:GetDevEndpoints',
-                                                      'glue:GetTable',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'iam:DeleteAccessKey',
-                                                      'iam:DeleteInstanceProfile',
-                                                      'iam:DeleteLoginProfile',
-                                                      'iam:DeletePolicy',
-                                                      'iam:DeletePolicyVersion',
-                                                      'iam:DeleteRole',
-                                                      'iam:DeleteRolePolicy',
-                                                      'iam:DeleteUser',
-                                                      'iam:DeleteUserPolicy',
-                                                      'iam:DetachGroupPolicy',
-                                                      'iam:DetachRolePolicy',
-                                                      'iam:DetachUserPolicy',
-                                                      'iam:GenerateServiceLastAccessedDetails',
-                                                      'iam:GetAccessKeyLastUsed',
-                                                      'iam:GetServiceLastAccessedDetails',
-                                                      'iam:ListAccessKeys',
-                                                      'iam:ListAttachedRolePolicies',
-                                                      'iam:ListEntitiesForPolicy',
-                                                      'iam:ListGroupsForUser',
-                                                      'iam:ListInstanceProfilesForRole',
-                                                      'iam:ListPolicies',
-                                                      'iam:ListPolicyVersions',
-                                                      'iam:ListRolePolicies',
-                                                      'iam:ListRoles',
-                                                      'iam:ListUserPolicies',
-                                                      'iam:ListUsers',
-                                                      'iam:RemoveRoleFromInstanceProfile',
-                                                      'iam:RemoveUserFromGroup',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'kafka:DeleteCluster',
-                                                      'kafka:ListClustersV2',
-                                                      'ec2:DeleteVpcEndpoints',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'kinesis:DeleteStream',
-                                                      'kinesis:DescribeStream',
-                                                      'kinesis:ListStreams',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'kms:DescribeKey',
-                                                      'kms:ListKeys',
-                                                      'kms:ScheduleKeyDeletion',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'lambda:DeleteFunction',
-                                                      'lambda:ListFunctions',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'logs:DeleteLogGroup',
-                                                      'logs:DescribeLogGroups',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'redshift:DeleteCluster',
-                                                      'redshift:DeleteClusterSnapshot',
-                                                      'redshift:DescribeClusterSnapshots',
-                                                      'redshift:DescribeClusters',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'rds:DeleteDBCluster',
-                                                      'rds:DeleteDBClusterSnapshot',
-                                                      'rds:DeleteDBInstance',
-                                                      'rds:DeleteDBSnapshot',
-                                                      'rds:DescribeDBClusters',
-                                                      'rds:DescribeDBClusterSnapshots',
-                                                      'rds:DescribeDBInstances',
-                                                      'rds:DescribeDBSnapshots',
-                                                      'rds:ModifyDBCluster',
-                                                      'rds:ModifyDBInstance',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      's3:Delete*',
-                                                      's3:Get*',
-                                                      's3:List*',
-                                                      's3:Put*',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'sagemaker:DeleteApp',
-                                                      'sagemaker:DeleteEndpoint',
-                                                      'sagemaker:DeleteNotebookInstance',
-                                                      'sagemaker:ListApps',
-                                                      'sagemaker:ListEndpoints',
-                                                      'sagemaker:ListNotebookInstances',
-                                                      'sagemaker:StopNotebookInstance',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'sts:GetCallerIdentity',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'transfer:DeleteServer',
-                                                      'transfer:ListServers',
-                                                  ],
-                                                  'Resource': '*',
-                                              },
-                                              {
-                                                  'Effect': 'Allow',
-                                                  'Action': [
-                                                      'xray:PutTraceSegments',
-                                                      'xray:PutTelemetryRecords',
-                                                  ],
-                                                  'Resource': [
-                                                      '*',
-                                                  ],
-                                              },
-                                          ],
-                                      },
-                                  },
-                              ],
-                              path='/',
-                              role_name='-'.join([
-                                  'auto-cleanup-app',
-                                  'prod',
-                                  self.region,
-                                  'lambdaRole',
-                              ]),
-                              )
+        ac_lambda_role = Role(
+            self, 'IamRoleLambdaExecution',
+            assumed_by=ServicePrincipal("lambda.amazonaws.com"),
+            role_name=f"auto-cleanup-app-prod-{self.region}-lambdaRole",
+            path='/'
+        )
+
+        policy_document = PolicyDocument(
+            statements=[
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource",
+                    ],
+                    resources=[f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=["logs:PutLogEvents"],
+                    resources=[f"arn:{self.partition}:logs:{self.region}:{self.account}:log-group:/aws/lambda/auto-cleanup-app-prod*:*:*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=["*"],
+                    resources=["*"],
+                    conditions={
+                        "ForAnyValue:StringEquals": {
+                            "aws:CalledVia": ["cloudformation.amazonaws.com"]
+                        }
+                    }
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "airflow:DeleteEnvironment",
+                        "airflow:GetEnvironment",
+                        "airflow:ListEnvironments",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "amplify:DeleteApp",
+                        "amplify:ListApps",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "cloudformation:DeleteStack",
+                        "cloudformation:DescribeStacks",
+                        "cloudformation:DescribeStackResources",
+                        "cloudformation:ListStackResources",
+                        "cloudformation:ListStacks",
+                        "cloudformation:UpdateTerminationProtection",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=["codecommit:GetRepository"],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "dynamodb:BatchWriteItem",
+                        "dynamodb:DeleteItem",
+                        "dynamodb:DeleteTable",
+                        "dynamodb:DescribeTable",
+                        "dynamodb:GetItem",
+                        "dynamodb:ListTables",
+                        "dynamodb:PutItem",
+                        "dynamodb:Scan",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "ec2:DeleteNatGateway",
+                        "ec2:DeleteSecurityGroup",
+                        "ec2:DeleteSnapshot",
+                        "ec2:DeleteVolume",
+                        "ec2:DeregisterImage",
+                        "ec2:DescribeAddresses",
+                        "ec2:DescribeImages",
+                        "ec2:DescribeInstanceAttribute",
+                        "ec2:DescribeInstances",
+                        "ec2:DescribeNatGateways",
+                        "ec2:DescribeSecurityGroups",
+                        "ec2:DescribeSnapshots",
+                        "ec2:DescribeVolumes",
+                        "ec2:ModifyInstanceAttribute",
+                        "ec2:ReleaseAddress",
+                        "ec2:StopInstances",
+                        "ec2:TerminateInstances",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "ecr:BatchDeleteImage",
+                        "ecr:DeleteRepository",
+                        "ecr:DescribeImages",
+                        "ecr:DescribeRepositories",
+                        "ecr:ListImages",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "ecs:DeleteCluster",
+                        "ecs:DeleteService",
+                        "ecs:DescribeClusters",
+                        "ecs:DescribeServices",
+                        "ecs:ListClusters",
+                        "ecs:ListServices",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "eks:DeleteCluster",
+                        "eks:DeleteFargateProfile",
+                        "eks:DeleteNodegroup",
+                        "eks:DescribeCluster",
+                        "eks:DescribeFargateProfile",
+                        "eks:DescribeNodegroup",
+                        "eks:ListClusters",
+                        "eks:ListFargateProfiles",
+                        "eks:ListNodegroups",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "elasticbeanstalk:DeleteApplication",
+                        "elasticbeanstalk:DescribeApplications",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "elasticache:DeleteCacheCluster",
+                        "elasticache:DeleteReplicationGroup",
+                        "elasticache:DescribeCacheClusters",
+                        "elasticache:DescribeReplicationGroups",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "elasticfilesystem:DeleteFileSystem",
+                        "elasticfilesystem:DeleteMountTarget",
+                        "elasticfilesystem:DescribeFileSystems",
+                        "elasticfilesystem:DescribeMountTargets",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "elasticloadbalancing:DeleteLoadBalancer",
+                        "elasticloadbalancing:DescribeLoadBalancers",
+                        "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "elasticmapreduce:ListClusters",
+                        "elasticmapreduce:TerminateJobFlows",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "es:DeleteElasticsearchDomain",
+                        "es:DescribeElasticsearchDomainConfig",
+                        "es:ListDomainNames",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "glue:DeleteCrawler",
+                        "glue:DeleteDatabase",
+                        "glue:DeleteDevEndPoint",
+                        "glue:GetCrawlers",
+                        "glue:GetDatabases",
+                        "glue:GetDevEndpoints",
+                        "glue:GetTable",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "iam:DeleteAccessKey",
+                        "iam:DeleteInstanceProfile",
+                        "iam:DeleteLoginProfile",
+                        "iam:DeletePolicy",
+                        "iam:DeletePolicyVersion",
+                        "iam:DeleteRole",
+                        "iam:DeleteRolePolicy",
+                        "iam:DeleteUser",
+                        "iam:DeleteUserPolicy",
+                        "iam:DetachGroupPolicy",
+                        "iam:DetachRolePolicy",
+                        "iam:DetachUserPolicy",
+                        "iam:GenerateServiceLastAccessedDetails",
+                        "iam:GetAccessKeyLastUsed",
+                        "iam:GetServiceLastAccessedDetails",
+                        "iam:ListAccessKeys",
+                        "iam:ListAttachedRolePolicies",
+                        "iam:ListEntitiesForPolicy",
+                        "iam:ListGroupsForUser",
+                        "iam:ListInstanceProfilesForRole",
+                        "iam:ListPolicies",
+                        "iam:ListPolicyVersions",
+                        "iam:ListRolePolicies",
+                        "iam:ListRoles",
+                        "iam:ListUserPolicies",
+                        "iam:ListUsers",
+                        "iam:RemoveRoleFromInstanceProfile",
+                        "iam:RemoveUserFromGroup",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "kafka:DeleteCluster",
+                        "kafka:ListClustersV2",
+                        "ec2:DeleteVpcEndpoints",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "kinesis:DeleteStream",
+                        "kinesis:DescribeStream",
+                        "kinesis:ListStreams",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "kms:DescribeKey",
+                        "kms:ListKeys",
+                        "kms:ScheduleKeyDeletion",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "lambda:DeleteFunction",
+                        "lambda:ListFunctions",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "logs:DeleteLogGroup",
+                        "logs:DescribeLogGroups",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "redshift:DeleteCluster",
+                        "redshift:DeleteClusterSnapshot",
+                        "redshift:DescribeClusterSnapshots",
+                        "redshift:DescribeClusters",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "rds:DeleteDBCluster",
+                        "rds:DeleteDBClusterSnapshot",
+                        "rds:DeleteDBInstance",
+                        "rds:DeleteDBSnapshot",
+                        "rds:DescribeDBClusters",
+                        "rds:DescribeDBClusterSnapshots",
+                        "rds:DescribeDBInstances",
+                        "rds:DescribeDBSnapshots",
+                        "rds:ModifyDBCluster",
+                        "rds:ModifyDBInstance",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "s3:Delete*",
+                        "s3:Get*",
+                        "s3:List*",
+                        "s3:Put*",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "sagemaker:DeleteApp",
+                        "sagemaker:DeleteEndpoint",
+                        "sagemaker:DeleteNotebookInstance",
+                        "sagemaker:ListApps",
+                        "sagemaker:ListEndpoints",
+                        "sagemaker:ListNotebookInstances",
+                        "sagemaker:StopNotebookInstance",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=["sts:GetCallerIdentity"],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "transfer:DeleteServer",
+                        "transfer:ListServers",
+                    ],
+                    resources=["*"]
+                ),
+                PolicyStatement(
+                    effect=Effect.ALLOW,
+                    actions=[
+                        "xray:PutTraceSegments",
+                        "xray:PutTelemetryRecords",
+                    ],
+                    resources=["*"]
+                ),
+            ]
+        )
+
+        ac_lambda_role.attach_inline_policy(
+            Policy(
+                self, 'AutoCleanupAppProdLambdaPolicy',
+                document=policy_document
+            )
+        )
 
         ac_function = _lambda.Function(self, "ac_function",
                                        runtime=_lambda.Runtime.PYTHON_3_9,
@@ -466,7 +429,12 @@ class AwsAutoCleanupAppStack(Stack):
         # Glue Database
         auto_cleanup_database = CfnDatabase(
             self, 'AutoCleanupDatabase',
-            database_name='auto-cleanup-app-prod'
+            database_name='auto-cleanup-app-prod',
+            catalog_id=self.account,
+            database_input=CfnDatabase.DatabaseInputProperty(
+                name='auto-cleanup-app-prod',
+                description='Database for Auto Cleanup App'
+            )
         )
 
         # CloudWatch Log Group
