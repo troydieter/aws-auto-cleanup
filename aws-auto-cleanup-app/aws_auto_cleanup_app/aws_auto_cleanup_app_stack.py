@@ -399,7 +399,8 @@ class AwsAutoCleanupAppStack(Stack):
             ),
             billing_mode=BillingMode.PAY_PER_REQUEST,
             time_to_live_attribute='expiration',
-            point_in_time_recovery=True
+            point_in_time_recovery=True,
+            removal_policy=core.RemovalPolicy.DESTROY
         )
 
         # S3 Bucket for Athena Results
