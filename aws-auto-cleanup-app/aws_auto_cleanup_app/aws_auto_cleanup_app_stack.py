@@ -1,8 +1,9 @@
 import os
 import subprocess
+from sys import path
 
 from aws_cdk import (
-    aws_lambda as _lambda,
+    aws_lambda as lambda_,
     Stack,
     Duration
 )
@@ -15,7 +16,7 @@ from aws_cdk.aws_logs import LogGroup
 from aws_cdk.aws_s3 import Bucket, BucketEncryption, LifecycleRule
 from aws_cdk.aws_events_targets import LambdaFunction
 from constructs import Construct
-
+DIRNAME = os.path.dirname(__file__)
 
 class AwsAutoCleanupAppStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -498,10 +499,10 @@ class AwsAutoCleanupAppStack(Stack):
             schedule=Schedule.rate(core.Duration.days(3)),
         )
 
-        ac_function = _lambda.Function(self, "ac_function",
-                                       runtime=_lambda.Runtime.PYTHON_3_9,
-                                       handler="./aws_auto_cleanup_app/src/main.lambda_handler",
-                                       code=_lambda.Code.from_asset("./aws_auto_cleanup_app/src/"),
+        ac_function = lambda_.Function(self, "ac_function",
+                                       runtime=lambda_.Runtime.PYTHON_3_9,
+                                       handler="main.lambda_handler",
+                                       code=lambda_.Code.from_asset(os.path.join(DIRNAME, "src")),
                                        memory_size=512,
                                        timeout=Duration.seconds(900),
                                        retry_attempts=0,
@@ -519,7 +520,7 @@ class AwsAutoCleanupAppStack(Stack):
         # Target the function
         auto_cleanup_events_rule_schedule1.add_target(LambdaFunction(ac_function))
 
-    def create_dependencies_layer(self, project_name, function_name: str) -> _lambda.LayerVersion:
+    def create_dependencies_layer(self, project_name, function_name: str) -> lambda_.LayerVersion:
         requirements_file = "./aws_auto_cleanup_app/src/requirements.txt"
         output_dir = f"./aws_auto_cleanup_app/.build/app"
 
@@ -537,9 +538,9 @@ class AwsAutoCleanupAppStack(Stack):
                 raise
 
         layer_id = "ac-dependencies"
-        layer_code = _lambda.Code.from_asset(output_dir)
+        layer_code = lambda_.Code.from_asset(output_dir)
 
-        ac_layer = _lambda.LayerVersion(
+        ac_layer = lambda_.LayerVersion(
             self,
             layer_id,
             code=layer_code,
