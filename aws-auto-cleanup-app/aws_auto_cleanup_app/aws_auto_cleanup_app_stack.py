@@ -423,7 +423,7 @@ class AwsAutoCleanupAppStack(Stack):
                     expiration=core.Duration.days(7)
                 )
             ],
-            removal_policy=core.RemovalPolicy.RETAIN
+            removal_policy=core.RemovalPolicy.DESTROY
         )
 
         # Glue Database
@@ -441,7 +441,7 @@ class AwsAutoCleanupAppStack(Stack):
         auto_cleanup_log_group = LogGroup(
             self, 'AutoCleanupLogGroup',
             log_group_name='/aws/lambda/auto-cleanup-app-prod',
-            removal_policy=core.RemovalPolicy.RETAIN
+            removal_policy=core.RemovalPolicy.DESTROY
         )
 
         # S3 Bucket for Execution Logs
@@ -449,13 +449,7 @@ class AwsAutoCleanupAppStack(Stack):
             self, 'ExecutionLogBucket',
             bucket_name=f"auto-cleanup-app-prod-execution-log-{self.account}",
             encryption=BucketEncryption.S3_MANAGED,
-            removal_policy=core.RemovalPolicy.RETAIN
-        )
-
-        # S3 Bucket for Serverless Deployment
-        serverless_deployment_bucket = Bucket(
-            self, 'ServerlessDeploymentBucket',
-            encryption=BucketEncryption.S3_MANAGED
+            removal_policy=core.RemovalPolicy.DESTROY
         )
 
         # DynamoDB Settings Table
