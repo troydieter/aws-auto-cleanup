@@ -25,7 +25,7 @@ python-dateutil==2.8.2
     # via botocore
 s3transfer==0.5.2
     # via boto3
-simplejson==3.17.6
+simplejson==3.20.2
     # via dynamodb-json
 six==1.16.0
     # via
