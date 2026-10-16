@@ -27,7 +27,7 @@ s3transfer==0.5.2
     # via boto3
 simplejson==3.17.6
     # via dynamodb-json
-six==1.16.0
+six==1.17.0
     # via
     #   dynamodb-json
     #   python-dateutil
