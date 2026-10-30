@@ -4,9 +4,9 @@
 #
 #    pip-compile requirements.in
 #
-boto3==1.22.7
+boto3==1.43.123
     # via dynamodb-json
-botocore==1.25.7
+botocore==1.43.123
     # via
     #   boto3
     #   s3transfer
@@ -18,7 +18,7 @@ jmespath==1.0.0
     #   botocore
 python-dateutil==2.8.2
     # via botocore
-s3transfer==0.5.2
+s3transfer==0.19.3
     # via boto3
 simplejson==3.17.6
     # via dynamodb-json
